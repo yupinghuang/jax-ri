@@ -3,6 +3,7 @@
 import jax.numpy as jnp
 import jax.scipy as jsp
 
+BIG_NUMBER = 10000
 
 def ln_ill_defined_prior(image: jnp.array) -> jnp.array:
     """
@@ -13,6 +14,10 @@ def ln_ill_defined_prior(image: jnp.array) -> jnp.array:
     :return:
     """
     return jnp.ones(shape=image.shape)
+
+
+def ln_positive_number(image: jnp.array) -> jnp.array:
+    return jsp.stats.uniform.logpdf(image, loc=0, scale=BIG_NUMBER)
 
 
 def ln_some_other_prior(image: jnp.array) -> jnp.array:
