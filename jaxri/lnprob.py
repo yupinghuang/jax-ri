@@ -3,9 +3,10 @@ Includes code for both model and the likelihood function
 """
 
 import jax.numpy as jnp
-import jax
+from jax import vmap, jit
 import jax.scipy as jsp
 
+import numpy as onp
 
 def model(uv: jnp.array, lm: jnp.array, image: jnp.array) -> jnp.complex64:
     """
@@ -20,6 +21,20 @@ def model(uv: jnp.array, lm: jnp.array, image: jnp.array) -> jnp.complex64:
     return jnp.sum(image * jnp.exp(-2 * jnp.pi * 1j * (u * l + v * m)))
 
 
+def simulate(uv_arr: jnp.array, lm_arr: jnp.array, model_im: jnp.array, sigma: float) -> onp.array:
+    """
+    model + noise. Return as a numpy array so that we can save it to disk.
+    :param uv:
+    :param lm:
+    :param image:
+    :param sigma:
+    :return:
+    """
+    vmap_model = jit(vmap(model, in_axes=(0, None, None)))
+    vis_model = onp.asarray(vmap_model(uv_arr, lm_arr, model_im))
+    return sigma * onp.random.randn(*vis_model.shape) + vis_model
+
+
 def lnprob(vis_obs: jnp.array, model_im: jnp.array, lm_arr: jnp.array, uv_arr: jnp.array, sigma: float) -> float:
     """
     Return the log likelihood.
@@ -31,6 +46,6 @@ def lnprob(vis_obs: jnp.array, model_im: jnp.array, lm_arr: jnp.array, uv_arr: j
     :param sigma:
     :return:
     """
-    vmap_model = jax.vmap(model, in_axes=(0, None, None))
-    vis_model = vmap_model(uv_arr, model_im)
+    vmap_model = vmap(model, in_axes=(0, None, None))
+    vis_model = vmap_model(uv_arr, lm_arr, model_im)
     return jnp.sum(jsp.stats.norm.logpdf(vis_obs, loc=vis_model, scale=sigma))
