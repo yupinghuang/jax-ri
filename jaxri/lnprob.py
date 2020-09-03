@@ -32,7 +32,7 @@ def simulate(uv_arr: jnp.array, lm_arr: jnp.array, model_im: jnp.array, sigma: f
     """
     vmap_model = jit(vmap(model, in_axes=(0, None, None)))
     vis_model = onp.asarray(vmap_model(uv_arr, lm_arr, model_im))
-    return sigma * onp.random.randn(*vis_model.shape) + vis_model
+    return (sigma * onp.random.randn(*vis_model.shape) + sigma * 1j * onp.random.randn(*vis_model.shape)) + vis_model
 
 
 def lnprob(vis_obs: jnp.array, model_im: jnp.array, lm_arr: jnp.array, uv_arr: jnp.array, sigma: float) -> float:
