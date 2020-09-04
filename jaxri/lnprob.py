@@ -48,4 +48,4 @@ def lnprob(vis_obs: jnp.array, model_im: jnp.array, lm_arr: jnp.array, uv_arr: j
     """
     vmap_model = vmap(model, in_axes=(0, None, None))
     vis_model = vmap_model(uv_arr, lm_arr, model_im)
-    return jnp.sum(jsp.stats.norm.logpdf(vis_obs, loc=vis_model, scale=sigma))
+    return jnp.sum(jsp.stats.norm.logpdf(jnp.abs(vis_obs - vis_model), scale=sigma))
