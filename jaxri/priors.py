@@ -7,34 +7,37 @@ BIG_NUMBER = 10000
 
 def ln_ill_defined_prior(image: jnp.array) -> jnp.array:
     """
-    This is equivalent to optimizing the likelihood function only. i.e. a "uniform over all real number" kind of
+    This is equivalent to optimizing the likelihood function only. 
+    i.e. a "uniform over all real number" kind of
     prior, which mathematically does not exist.
 
     :param image: the image to evaluate the prior on.
-    :return:
+    :return: 
     """
     return jnp.ones(shape=image.shape)
-
 
 def ln_positive_number(image: jnp.array) -> jnp.array:
     return jsp.stats.uniform.logpdf(image, loc=0, scale=BIG_NUMBER)
 
+def ln_positive_laplace(image: jnp.array, laplace_scale: float = 1) -> jnp.array:
+  """
+  Function to evaluate a laplacian prior with positive values
+  Args: image: the image to evaluate the prior on
+        laplace_scale: scale parameter to be passed on to jsp.stats.laplace.logpdf()
+  Returns: log of laplacian distribution over positive numbers
+  """
+  lnpdf_laplace = jsp.stats.laplace.logpdf(image, loc = 0, scale = laplace_scale)
+  lnpdf_uniform = jsp.stats.uniform.logpdf(image, loc=0, scale = 1000)
+  ln_prior = lnpdf_laplace + lnpdf_uniform
+  return ln_prior
 
-def ln_some_other_prior(image: jnp.array) -> jnp.array:
-    # jsp.stats.norm.logpdf for a Gaussian log PDF?
-    # jsp.stats.laplace.logpdf for a Gaussian log PDF?
-    # A prior that enforces positive sky value?
-    return
+def ln_gaussian_prior(image: jnp.array, mean: jnp.array, std: jnp.array) -> jnp.array:
+  """
+  Function to calculate gaussian prior over an image
+  Args: image: the image to evaluate prior on
+        mean: mean map obtained from mean_std_map()
+        std: std map obtained from mean_std_map()
+  Returns: log of gaussian prior evaluated over the image
+  """
+  return jsp.stats.norm.logpdf(image, loc=mean, scale = std)
 
-
-"""
-Note: if you're doing Gaussian prior, your parameters will be different for different test cases. JAX does not like
-branching (if clauses) inside functions, so our best bet is to have one ln_norm_prior for each test case (say
-log_norm_cat_prior, ln_norm_sky_prior.
-
-You can generate the Gaussian prior that encodes previous observations by taking a rolling mean and std across a
-modified version of the ground truth image that represents a previous observation.
-You can generate such an image by blurring the groud-truth image with a convolution (simulating a lower-res obsrvation),
-or by adding significant noises (less sensitivity), or by not including one of the sources (the sky being variable
-itself or missing spatial scales.)
-"""
